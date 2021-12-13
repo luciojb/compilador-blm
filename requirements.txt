@@ -1,0 +1,4 @@
+appdirs==1.4.4
+llc==0.2.0
+llvmlite==0.37.0
+rply==0.7.8
