@@ -321,22 +321,22 @@ class Compiler:
                 value = self.builder.fsub(lhs, rhs)
             elif op == '<':
                 value = self.builder.fcmp_ordered('<', lhs, rhs)
-                Type = ir.IntType(1)
+                Type = ir.FloatType(1.0)
             elif op == '<=':
                 value = self.builder.fcmp_ordered('<=', lhs, rhs)
-                Type = ir.IntType(1)
+                Type = ir.FloatType(1.0)
             elif op == '>':
                 value = self.builder.fcmp_ordered('>', lhs, rhs)
-                Type = ir.IntType(1)
+                Type = ir.FloatType(1.0)
             elif op == '>=':
                 value = self.builder.fcmp_ordered('>=', lhs, rhs)
-                Type = ir.IntType(1)
+                Type = ir.FloatType(1.0)
             elif op == '!=':
                 value = self.builder.fcmp_ordered('!=', lhs, rhs)
-                Type = ir.IntType(1)
+                Type = ir.FloatType(1.0)
             elif op == '==':
                 value = self.builder.fcmp_ordered('==', lhs, rhs)
-                Type = ir.IntType(1)
+                Type = ir.FloatType(1.0)
 
         elif isinstance(rhs_type, ir.IntType) and isinstance(lhs_type, ir.IntType):
             Type = ir.IntType(32)

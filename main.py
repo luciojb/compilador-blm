@@ -13,6 +13,10 @@ def run_code(code):
     compiler = Compiler()
     lexer = PLexer()
     tokens = lexer.tokenize(code)
+    # try:
+    #     pprint([token.type + " : " + token.value for token in tokens])
+    # except Exception as e:
+    #     pprint(e)
     parser = PParser()
     parser.parse(tokens)
     ast = parser.ast

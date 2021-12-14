@@ -49,8 +49,8 @@ class PLexer(Lexer):
         MOD,
         WHILE,
         UNTIL,
-        BREAK,
-        CONTINUE,
+        # BREAK,
+        # CONTINUE,
         AND,
         OR,
         COMMA
@@ -79,8 +79,8 @@ class PLexer(Lexer):
     NAME['return'] = RETURN
     NAME['while'] = WHILE
     NAME['until'] = UNTIL
-    NAME['break'] = BREAK
-    NAME['continue'] = CONTINUE
+    # NAME['break'] = BREAK
+    # NAME['continue'] = CONTINUE
     NAME['and'] = AND
     NAME['or'] = OR
     STRING = r'(\".*?\")|(\'.*?\')'
