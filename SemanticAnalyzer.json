@@ -1,0 +1,14 @@
+JSONParsedTree = {
+  "chart": {
+    "container": "#parsed-tree",
+    "connectors": {
+      "type": "straight"
+    }
+  },
+  "nodeStructure": {
+    "text": {
+      "name": "main"
+    },
+    "children": []
+  }
+}
