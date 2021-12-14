@@ -1,153 +1,59 @@
-# from lexer import Lexer
-# from parser import Parser
+import sys
+from ctypes import CFUNCTYPE, c_int
+from time import time
+
+import llvmlite.binding as llvm
+
+from sly_way.Lexer import PLexer
+from sly_way.Parser import PParser
+from sly_way.compiler import Compiler
 
 
-#
-# fname = "input.blm"
-# with open(fname) as f:
-#     text_input = f.read()
-#
-# lexer = Lexer().get_lexer()
-# tokens = lexer.lex(text_input)
+def run_code(code):
+    compiler = Compiler()
+    lexer = PLexer()
+    tokens = lexer.tokenize(code)
+    parser = PParser()
+    parser.parse(tokens)
+    ast = parser.ast
+    ast = ast[1]['body']
+    # print(pprint.pformat(ast))
+    compiler.compile(ast)
+    module = compiler.module
+
+    module.triple = llvm.get_default_triple()
+    llvm.initialize()
+    llvm.initialize_native_target()
+    llvm.initialize_native_asmprinter()
+
+    llvm_ir_parsed = llvm.parse_assembly(str(module))
+    llvm_ir_parsed.verify()
+
+    target_machine = llvm.Target.from_default_triple().create_target_machine()
+    engine = llvm.create_mcjit_compiler(llvm_ir_parsed, target_machine)
+    engine.finalize_object()
+
+    # Run the function with name func_name. This is why it makes sense to have a 'main' function that calls other functions.
+    entry = engine.get_function_address('main')
+    cfunc = CFUNCTYPE(c_int)(entry)
+
+    with open('output.ll', 'w') as output_file:
+        output_file.write(str(module))
+    print('The llvm IR generated is:')
+    print(module)
+    print()
+    start_time = time()
+    result = cfunc()
+    end_time = time()
+
+    print(f'It returns {result}')
+    print('\nExecuted in {:f} sec'.format(end_time - start_time))
 
 
-# pg.parse()
-# parser = pg.get_parser()
-# parser.parse(tokens).eval()
-#
-# codegen.create_ir()
-# codegen.save_ir("output.ll")
-
-import traceback
-from copy import copy
-from pprint import pprint
-
-from rply.lexer import LexerStream
-
-from ArvoreJSON import Node
-from codegen import CodeGen
-from lexer import Lexer
-from parser import ParserState, Parser
-
-codegen = CodeGen()
-
-module = codegen.module
-builder = codegen.builder
-printf = codegen.printf
-pg = Parser(module, builder, printf)
-
-basic_assignment = """
-    var initial = 60;
-    var rate = 2;
-    var position = initial + rate * 60;
-    print(position);
-    print(rate);
-"""
-function_declaration = """
-function main() {
-    var initial = 60;
-    var rate = 2;
-    var position = initial + rate * 60;
-    print(position);
-}
-main();
-"""
-if_else_statement = """
-if (False) {
-    print(False == (5 != 5));
-    print(5.1111 != 5.1);
-    print(5 != 5);
-    print(not True);
-} else {
-    print(abs(3.5 - 4));
-    print(sin(3.5 - 4));
-    print(cos(__E__ - __PI__));
-    print(tan(__PI__ - __E__));
-    print(pow(-2, 5));
-}
-"""
-assignment_and_variables = """
-    var a = 5 - 2;
-    var b = 5;
-    print(sin(a));
-    print(a); print(b); print(b - a);
-    print(not False);
-"""
-call_declared_functions = """
-function userDefined() {
-    var pi = __PI__;
-    var e = __E__;
-    print(2 * (pi + e - 1) / 3);
-    print(abs(e - pi));
-    print(sin(pi));
-    print(cos(pi));
-    print(tan(pi));
-    print(pow(pi, e));
-}
-function main() {
-    var i = input("Please input the number: ");
-    if (i > 0 and i < 5) {
-        print("i > 0 and i < 5 -> Call User Defined Function !");
-        userDefined();
-    } else {
-        if (i > 5 && i < 10) {
-            print("i > 5 && i < 10 -> Call User Defined Function !");
-            userDefined();
-        } else {
-            print();
-            print("Input value equal to or less than 0 !");
-        }
-    }
-}
-main();
-"""
-
-# lexer = Lexer().build()  # Build the lexer using LexerGenerator
-# tokens: LexerStream
-# try:
-#     tokens = lexer.lex(call_declared_functions)  # Stream the input to analysis the lexical syntax
-#     tokenType = map(lambda x: x.gettokentype(), copy(tokens))
-#     tokenName = map(lambda x: x.getstr(), copy(tokens))
-#     pprint(list(copy(tokens)))
-#     # pprint(list(copy(tokenType)))
-#     # pprint(list(copy(tokenName)))
-# except (BaseException, Exception) as e:
-#     traceback.print_exc()
-#     print(e)
-# finally:
-#     print("Finish lexical analysis !")
-#
-# SymbolTable = ParserState()
-# try:
-#     pg.build().parse(copy(tokens), state=SymbolTable)  # Get syntax tree !
-#     pg.build().parse(copy(tokens), state=SymbolTable).eval(node)  # Get semantic tree !
-# except (BaseException, Exception) as e:
-#     traceback.print_exc()
-#     print(e)
-# finally:
-#     print("------------------------------Declared Variables & Functions are:------------------------------")
-#     pprint(SymbolTable.variables)
-#     pprint(SymbolTable.functions)
-
-lexer = Lexer().build()  # Build the lexer using LexerGenerator
-tokens: LexerStream
-try:
-    tokens = lexer.lex(call_declared_functions)  # Stream the input to analysis the lexical syntax
-    tokenType = map(lambda x: x.gettokentype(), copy(tokens))
-    tokenName = map(lambda x: x.getstr(), copy(tokens))
-    pprint(list(copy(tokens)))
-    # pprint(list(copy(tokenType)))
-    # pprint(list(copy(tokenName)))
-except (BaseException, Exception):
-    traceback.print_exc()
-finally:
-    print("Finish lexical analysis !")
-
-SymbolTable = ParserState()
-syntaxRoot: Node
-semanticRoot = Node("main")
-try:
-    syntaxRoot = Node("main", pg.build().parse(copy(tokens), state=SymbolTable))  # Get syntax tree !
-    pg.build().parse(copy(tokens), state=SymbolTable).eval(semanticRoot)  # Get semantic tree !
-except (BaseException, Exception):
-    traceback.print_exc()
+if len(sys.argv) >= 2:
+    with open(sys.argv[1], 'r') as file:
+        code = file.read()
+    run_code(code)
+else:
+    print('Usage: python3 main.py <filename>')
+    raise TypeError('Expected a <file>')
